@@ -12,7 +12,7 @@ String? price;
 String? priceAfter;
 final VoidCallback? onPressed;
 final VoidCallback? SecondOnPressed;
-final IconData? icon;
+ Widget icon;
 
 CustomDesign(
     {this.image,
@@ -21,7 +21,7 @@ CustomDesign(
       this.description,
       this.price,
       this.priceAfter,
-      this.icon,
+      required this.icon,
       this.onPressed,
       this.SecondOnPressed
 
@@ -62,7 +62,7 @@ CustomDesign(
                 IconButton(onPressed: onPressed,
                   // cubit.addToFav(id: cubit.booksModel?.data?.products?[index].id ?? 0);
 
-                  icon: Icon(Icons.favorite_border_outlined,color: Colors.blueGrey,),),
+                  icon: icon),
                 Spacer(),
                 IconButton(onPressed: SecondOnPressed,
 

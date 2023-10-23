@@ -29,8 +29,11 @@ class CartScreen extends StatelessWidget {
           body: Padding(
             padding:  EdgeInsets.all(10.0.w),
             child: SafeArea(
-              child: Column(
+              child: cubit.cartModel?.data?.cartItems?.length== 0 ?
+              Center(child: Text('The Cart Is Empty',style: TextStyle(color: CustomColors.primaryButton,fontSize: 20.sp),),):
+              Column(
                 children: [
+
                 Expanded(
                   child: ListView.separated(
                     separatorBuilder: (context, index) => SizedBox(height: 10.h,),
@@ -64,7 +67,7 @@ class CartScreen extends StatelessWidget {
                                        children: [
                                          IconButton(onPressed: ()
                                          {
-                                           print(cubit.cartModel!.data!.cartItems![index].itemId);
+
                                            int? currentQuantity = cubit.cartModel!.data!.cartItems![index].itemQuantity;
                                            cubit.updateCart(id:cubit.cartModel!.data!.cartItems![index].itemId??0,quantity: currentQuantity! + 1 );
                                          }, icon: Icon(Icons.add)),
@@ -130,8 +133,8 @@ class CartScreen extends StatelessWidget {
                       height: 50.h,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(25),
-                        color: Color(0xff2f0569).withOpacity(0.5),
-                        border: Border.all( color: Color(0xff2f0569).withOpacity(0.7),width: 3)
+                        color: CustomColors.primaryButton.withOpacity(0.5),
+                        border: Border.all( color:CustomColors.primaryButton.withOpacity(0.7),width: 3)
 
                       ),
                       child: Row(
@@ -158,7 +161,7 @@ class CartScreen extends StatelessWidget {
                                 color: Colors.white,
 
                               ),
-                              child: Center(child: Text('CheckOut',style: GoogleFonts.roboto(fontWeight: FontWeight.w900,color: Color(0xff2f0569)),),),
+                              child: Center(child: Text('CheckOut',style: GoogleFonts.roboto(fontWeight: FontWeight.w900,color:CustomColors.primaryButton,),),),
                             ),
                           )
                         ],

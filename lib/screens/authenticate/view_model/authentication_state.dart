@@ -39,7 +39,9 @@ class SendForgetPassLoadingState extends AuthState{}
 
 
 
-
+class CheckForgetPassLoadingState extends AuthState{}
+class CheckForgetPassSuccessState extends AuthState{}
+class CheckForgetPassErrorState extends AuthState{}
 
 
 class RadioValueChanged extends AuthState{}
@@ -50,4 +52,7 @@ class GetUserDetailsError extends AuthState{}
 
 class ClearControllerState extends AuthState{}
 
+class ResetPassLoadingState extends AuthState{}
+class ResetPassSuccessState extends AuthState{}
+class ResetPassErrorState extends   AuthState{}
 

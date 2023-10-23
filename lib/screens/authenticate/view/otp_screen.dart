@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:untitled4/screens/authenticate/view_model/authentication_cubit.dart';
 import 'package:untitled4/screens/home_screen.dart';
@@ -10,20 +12,44 @@ class OtpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
-        if(state is VerifyEmailSuccessState)
-          {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen(),));
-          }
+        if (state is VerifyEmailSuccessState) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(),
+              ));
+        }
       },
       builder: (context, state) {
-        var cubit=AuthCubit.get(context);
+        var cubit = AuthCubit.get(context);
         return Scaffold(
           body: SafeArea(
             child: Column(
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Verify Your Email',textAlign: TextAlign.center,),
-                Text('email sent to your email :${cubit.email}',textAlign: TextAlign.center,),
+                Center(
+                  child: Lottie.asset('images/otp.json',
+                      width: 300.w, height: 260.h),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0.w),
+                  child: Text(
+                    'Verify Your Email',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.roboto(
+                        fontSize: 20.sp, fontWeight: FontWeight.bold,height: 2),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15.0.w),
+                  child: Text(
+                    'Code sent to your email : jojsoajdoj@maso.com',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(
+                  height: 30.h,
+                ),
                 PinCodeTextField(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   keyboardType: TextInputType.number,
@@ -46,15 +72,11 @@ class OtpScreen extends StatelessWidget {
                     print(value);
                   },
                   onCompleted: (v) {
-
                     cubit.verifyEmail();
-                    },
+                  },
                   pastedTextStyle: TextStyle(
                     color: Colors.green.shade600,
                     fontWeight: FontWeight.bold,
-                  ),
-                  obscuringWidget: const FlutterLogo(
-                    size: 24,
                   ),
                   animationType: AnimationType.fade,
                   cursorColor: Colors.black,

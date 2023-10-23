@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:untitled4/screens/authenticate/view/forget_password_screen.dart';
 import 'package:untitled4/screens/authenticate/view/otp_screen.dart';
 import 'package:untitled4/screens/authenticate/view/register_screen.dart';
 import 'package:untitled4/screens/authenticate/view_model/authentication_cubit.dart';
+import 'package:untitled4/utils/widgets/navigate.dart';
 import '../../../utils/colors/custom_colors.dart';
 import '../../../utils/widgets/custom_button.dart';
 import '../../../utils/widgets/custom_field.dart';
@@ -101,13 +103,18 @@ class LoginScreen extends StatelessWidget {
                             return null;
                           },
                         ),
-                        SizedBox(
-                          height: 15.h,
-                        ),
+                        TextButton(onPressed: ()
+                        {
+                          pushNavigate(context, ForgetPasswordScreen());
+                        },
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                                child: Text('Forget Password?',style: GoogleFonts.roboto(color: CustomColors.greyText,),)),),
                         Row(
                           children: [
                             Checkbox(
                                 value: cubit.authenticateCheckBox,
+                                activeColor:CustomColors.primaryButton ,
                                 onChanged: (value) {
                                   cubit.changeCheck();
                                 }),

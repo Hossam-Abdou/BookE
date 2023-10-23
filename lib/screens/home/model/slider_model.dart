@@ -47,7 +47,6 @@ class Data {
 
 class Sliders {
   String? image;
-
   Sliders({this.image});
 
   Sliders.fromJson(Map<String, dynamic> json) {

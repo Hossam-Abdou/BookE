@@ -15,6 +15,11 @@ class UpdateAccountLoadingState extends HomeState{}
 class UpdateAccountSuccessState extends HomeState{}
 class UpdateAccountErrorState extends   HomeState{}
 
+class UpdatePassLoadingState extends HomeState{}
+class UpdatePassSuccessState extends HomeState{}
+class UpdatePassErrorState extends   HomeState{}
+
+
 class GetBestSellerLoadingState extends HomeState{}
 class GetBestSellerSuccessState extends HomeState{}
 class GetBestSellerErrorState extends   HomeState{}
@@ -66,7 +71,9 @@ class GetBooksErrorState extends   HomeState{}
 class RemoveCartLoadingState extends HomeState{}
 class RemoveCartSuccessState extends HomeState{}
 class RemoveCartErrorState extends   HomeState{}
-class fitter extends HomeState {}
+
+class cityState extends HomeState {}
+class a extends HomeState {}
 
 class GetCityLoadingState extends HomeState{}
 class GetCitySuccessState extends HomeState{}
@@ -79,3 +86,20 @@ class GetOrderHistoryErrorState extends   HomeState{}
 class GetSingleOrderHistoryLoadingState extends HomeState{}
 class GetSingleOrderHistorySuccessState extends HomeState{}
 class GetSingleOrderHistoryErrorState extends   HomeState{}
+
+class SearchLoadingState extends HomeState{}
+class SearchSuccessState extends HomeState{}
+class SearchErrorState extends   HomeState{}
+
+class PlaceOrderLoadingState extends HomeState{}
+class PlaceOrderSuccessState extends HomeState{}
+class PlaceOrderErrorState extends   HomeState{}
+
+class GetLiveLoadingState extends HomeState{}
+class GetLiveSuccessState extends HomeState{}
+class GetLiveErrorState extends   HomeState{}
+
+class fitter extends HomeState {}
+class fitter1 extends HomeState {}
+class fitter2 extends HomeState {}
+class ClearFilterState extends HomeState {}

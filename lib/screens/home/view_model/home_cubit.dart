@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:untitled4/screens/home/model/cart/remove_cart_model.dart';
 import 'package:untitled4/screens/home/model/city_model.dart';
 import 'package:untitled4/screens/home/model/favourite/add_fav_model.dart';
@@ -10,7 +14,7 @@ import 'package:untitled4/screens/home/model/favourite/fav_model.dart';
 import 'package:untitled4/screens/home/model/home/best_seller_model.dart';
 import 'package:untitled4/screens/home/model/home/categories_model.dart';
 import 'package:untitled4/screens/home/model/home/new_arrival_model.dart';
-import 'package:untitled4/screens/home/model/place_order_model.dart';
+import 'package:untitled4/screens/home/model/order/place_order_model.dart';
 import 'package:untitled4/screens/home/model/slider_model.dart';
 import 'package:untitled4/screens/home/view/layout/account.dart';
 import 'package:untitled4/screens/home/view/layout/books_screen.dart';
@@ -24,8 +28,9 @@ import '../model/cart/add_cart_model.dart';
 import '../model/books_model.dart';
 import '../model/cart/cart_model.dart';
 import '../model/category_detail_model.dart';
-import '../model/order_history_model.dart';
-import '../model/singleorderhistorymodel.dart';
+import '../model/order/order_history_model.dart';
+import '../model/order/singleorderhistorymodel.dart';
+import '../model/search_model.dart';
 import '../view/layout/home.dart';
 
 part 'home_state.dart';
@@ -44,23 +49,71 @@ class HomeCubit extends Cubit<HomeState> {
   AddFavModel? addFavModel;
   BooksModel? booksModel;
   OrderHistoryModel? orderHistoryModel;
+  SingleOrderHistoryModel? singleOrderHistoryModel;
+  CategoryDetailsModel? categoryDetailsModel;
+  FavModel? wishListModel;
+  CartModel? cartModel;
+  CityModel? cityModel;
+  PlaceOrderModel? placeOrderModel;
+  RemoveCartModel? removeCartModel;
 
-  finalPrice(String price, String discount) {
-    double finalPrice = double.parse(price) - (double.parse(price) * (double.parse(discount) / 100));
-    return finalPrice.round();
-  }
+
+
 int index= 0;
-  void getFilter(value)
-  {
-    index=value;
-    emit(fitter());
-  }
+
   TextEditingController emailController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController addressController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController cityController = TextEditingController();
+  TextEditingController searchController = TextEditingController();
 
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController verifyPasswordController = TextEditingController();
+  TextEditingController newPasswordController = TextEditingController();
+  TextEditingController confirmNewPasswordController = TextEditingController();
+
+  var updatePassKey = GlobalKey<FormState>();
+  var searchKey = GlobalKey<FormState>();
+
+  final ScreenshotController screenshotController = ScreenshotController();
+
+
+  Future<void> takeScreenshotAndSave() async {
+    final Uint8List? screenshot = await screenshotController.capture();
+    await Future.delayed(Duration(milliseconds: 2000));
+    final result = await ImageGallerySaver.saveImage(screenshot!);
+
+    print("File Saved to Gallery");
+    emit(a());
+  }
+
+  finalPrice(String price, String discount) {
+    double finalPrice = double.parse(price) - (double.parse(price) * (double.parse(discount) / 100));
+    return finalPrice.round();
+  }
+
+  // user account page
+  getAccount() async {
+    emit(GetAccountLoadingState());
+    await DioHelper.getData(
+      url: EndPoints.profile,
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      userProfileModel = UserProfileModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(GetAccountSuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 401) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(GetAccountErrorState());
+    });
+  }
   initController() {
     emailController.text = userProfileModel?.data?.email ?? 'User email';
     nameController.text = userProfileModel?.data?.name ?? 'User name';
@@ -69,33 +122,59 @@ int index= 0;
     cityController.text = userProfileModel?.data?.city ?? 'City';
     emit(InitControllerState());
   }
-
-  getAccount() async {
-    emit(GetAccountLoadingState());
-    await DioHelper.getData(
-      url: EndPoints.profile,
+  updateProfile() async {
+    emit(UpdateAccountLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.updateProfile,
+      data: {
+        'phone':phoneController.text,
+        'name':nameController.text,
+        'address':addressController.text,
+        'city':cityController.text,
+      },
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
-      print(await SecureStorage().storage.read(key: 'token'),);
-      print('1');
-      userProfileModel = UserProfileModel.fromJson(value.data);
-      print('2');
       if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetAccountSuccessState());
+        emit(UpdateAccountSuccessState());
+        getAccount();
       }
     }).catchError((error) {
       print(error.toString());
-      print('3');
-      if (error is DioException && error.response?.statusCode == 401) {
-        print('5');
+      if (error is DioException && error.response?.statusCode == 422) {
         final data = error.response?.data;
-        final message = data['message'];
+        final message = data['errors'];
         print(message);
       }
-      emit(GetAccountErrorState());
+      emit(UpdateAccountErrorState());
+    });
+  }
+  updatePass() async {
+    emit(UpdatePassLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.updatePass,
+      data: {
+        'current_password': passwordController.text,
+        'new_password': newPasswordController.text,
+        'new_password_confirmation': confirmNewPasswordController.text,
+      },
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(UpdatePassSuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 422) {
+        final data = error.response?.data;
+        final message = data['errors'];
+        print(message);
+      }
+      emit(UpdatePassErrorState());
     });
   }
 
+
+  // home page
   getBestSeller() async {
     emit(GetBestSellerLoadingState());
     await DioHelper.getData(
@@ -114,70 +193,6 @@ int index= 0;
         print(message);
       }
       emit(GetBestSellerErrorState());
-    });
-  }
-
-  getOrderHistory() async {
-    emit(GetOrderHistoryLoadingState());
-    await DioHelper.getData(
-      url: EndPoints.orderHistory,
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      orderHistoryModel = OrderHistoryModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetOrderHistorySuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
-        final data = error.response?.data;
-        final message = data['message'];
-        print(message);
-      }
-      emit(GetOrderHistoryErrorState());
-    });
-  }
-  SingleOrderHistoryModel? singleOrderHistoryModel;
-  getSingleOrderHistory(id) async {
-    emit(GetSingleOrderHistoryLoadingState());
-    await DioHelper.getData(
-      url: '${EndPoints.singleOrderHistory}/$id',
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      singleOrderHistoryModel = SingleOrderHistoryModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetSingleOrderHistorySuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
-        final data = error.response?.data;
-        final message = data['message'];
-        print(message);
-      }
-      emit(GetSingleOrderHistoryErrorState());
-    });
-  }
-
-  CategoryDetailsModel? categoryDetailsModel;
-  getCategoryDetails(id) async {
-    emit(GetCategoriesDetailsLoadingState());
-    await DioHelper.getData(
-      url: '${EndPoints.categories}/$id',
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      categoryDetailsModel = CategoryDetailsModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetCategoriesDetailsSuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
-        final data = error.response?.data;
-        final message = data['message'];
-        print(message);
-      }
-      emit(GetCategoriesDetailsErrorState());
     });
   }
 
@@ -229,11 +244,14 @@ int index= 0;
       url: EndPoints.slider,
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
-      sliderModel = SliderModel.fromJson(value.data);
+      print('1');
       if (value.data['status'] == 200 || value.data['status'] == 201) {
+        print('2');
+        sliderModel = SliderModel.fromJson(value.data);
         emit(GetSliderSuccessState());
       }
     }).catchError((error) {
+      print('3');
       print(error.toString());
       if (error is DioException && error.response?.statusCode == 404) {
         final data = error.response?.data;
@@ -244,8 +262,73 @@ int index= 0;
     });
   }
 
-  FavModel? wishListModel;
+  getCategoryDetails(id) async {
+    emit(GetCategoriesDetailsLoadingState());
+    await DioHelper.getData(
+      url: '${EndPoints.categories}/$id',
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      categoryDetailsModel = CategoryDetailsModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(GetCategoriesDetailsSuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 404) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(GetCategoriesDetailsErrorState());
+    });
+  }
 
+
+
+  // order
+  getOrderHistory() async {
+    emit(GetOrderHistoryLoadingState());
+    await DioHelper.getData(
+      url: EndPoints.orderHistory,
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      orderHistoryModel = OrderHistoryModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(GetOrderHistorySuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 404) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(GetOrderHistoryErrorState());
+    });
+  }
+
+  getSingleOrderHistory(id) async {
+    emit(GetSingleOrderHistoryLoadingState());
+    await DioHelper.getData(
+      url: '${EndPoints.singleOrderHistory}/$id',
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      singleOrderHistoryModel = SingleOrderHistoryModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(GetSingleOrderHistorySuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 404) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(GetSingleOrderHistoryErrorState());
+    });
+  }
+
+  // favourite
   getWishList() async {
     emit(WishListLoadingState());
     await DioHelper.getData(
@@ -266,71 +349,53 @@ int index= 0;
       emit(WishListErrorState());
     });
   }
-
-  CartModel? cartModel;
-
-  getCart() async {
-    emit(CartLoadingState());
-    await DioHelper.getData(
-      url: EndPoints.cart,
+  addToFav({required int id}) async {
+    emit(AddFavLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.addFav,
+      data: {'product_id': id},
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
-      cartModel = CartModel.fromJson(value.data);
+      addFavModel = AddFavModel
+          .fromJson(value.data);
       if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(CartSuccessState());
+        emit(AddFavSuccessState());
+        getWishList();
       }
     }).catchError((error) {
       print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
+      if (error is DioException && error.response?.statusCode == 422) {
         final data = error.response?.data;
-        final message = data['message'];
+        final message = data['errors'];
         print(message);
       }
-      emit(CartErrorState());
+      emit(AddFavErrorState());
+    });
+  }
+  removeFav({required int id}) async {
+    emit(RemoveFavLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.removeFav,
+      data: {'product_id': id},
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      addFavModel = AddFavModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(RemoveFavSuccessState());
+        getWishList();
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 422) {
+        final data = error.response?.data;
+        final message = data['errors'];
+        print(message);
+      }
+      emit(RemoveFavErrorState());
     });
   }
 
-  getBooks() async {
-    emit(GetBooksLoadingState());
-    await DioHelper.getData(
-      url: EndPoints.getBooks,
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      booksModel = BooksModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetBooksSuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
-        final data = error.response?.data;
-        final message = data['message'];
-        print(message);
-      }
-      emit(GetBooksErrorState());
-    });
-  }
-CityModel? cityModel;
-  getCity() async {
-    emit(GetCityLoadingState());
-    await DioHelper.getData(
-      url: EndPoints.city,
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      cityModel = CityModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(GetCitySuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
-        final data = error.response?.data;
-        final message = data['message'];
-        print(message);
-      }
-      emit(GetCityErrorState());
-    });
-  }
+  // Cart screen
 
   addToCart({required int id}) async {
     emit(AddCartLoadingState());
@@ -354,81 +419,15 @@ CityModel? cityModel;
       emit(AddCartErrorState());
     });
   }
-
-
-  updateProfile() async {
-    emit(UpdateAccountLoadingState());
-    await DioHelper.postData(
-      url: EndPoints.updateProfile,
-      data: {
-        'phone':phoneController.text,
-        'name':nameController.text,
-        'address':addressController.text,
-        'city':cityController.text,
-      },
+  getCart() async {
+    emit(CartLoadingState());
+    await DioHelper.getData(
+      url: EndPoints.cart,
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
+      cartModel = CartModel.fromJson(value.data);
       if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(UpdateAccountSuccessState());
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 422) {
-        final data = error.response?.data;
-        final message = data['errors'];
-        print(message);
-      }
-      emit(UpdateAccountErrorState());
-    });
-  }
-
-
-
-  updateCart({required int id,required int quantity}) async {
-    emit(UpdateCartLoadingState());
-    await DioHelper.postData(
-      url: EndPoints.updateCart,
-      data: {
-        'cart_item_id': id,
-        'quantity':quantity
-
-      },
-      token: await SecureStorage().storage.read(key: 'token'),
-    ).then((value) async {
-      addCartModel = AddCartModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(UpdateCartSuccessState());
-        getCart();
-      }
-    }).catchError((error) {
-      print(error.toString());
-      if (error is DioException && error.response?.statusCode == 422) {
-        final data = error.response?.data;
-        final message = data['errors'];
-        print(message);
-      }
-      emit(UpdateCartErrorState());
-    });
-  }
-
-
-  PlaceOrderModel? placeOrderModel;
-  placeOrder() async {
-    emit(AddCartLoadingState());
-    await DioHelper.postData(
-      url: EndPoints.placeOrder,
-      data: {
-        'governorate_id': 2,
-        'phone':phoneController,
-        'name':nameController,
-        'email':emailController,
-        'address':addressController
-      },
-    ).then((value) async {
-      placeOrderModel = PlaceOrderModel.fromJson(value.data);
-      if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(AddCartSuccessState());
-        getCart();
+        emit(CartSuccessState());
       }
     }).catchError((error) {
       print(error.toString());
@@ -437,11 +436,9 @@ CityModel? cityModel;
         final message = data['message'];
         print(message);
       }
-      emit(AddCartErrorState());
+      emit(CartErrorState());
     });
   }
-
-  RemoveCartModel? removeCartModel;
   removeCart({required  int id}) async {
     emit(RemoveCartLoadingState());
     await DioHelper.postData(
@@ -470,19 +467,21 @@ CityModel? cityModel;
       emit(RemoveCartErrorState());
     });
   }
-
-  addToFav({required int id}) async {
-    emit(AddFavLoadingState());
+  updateCart({required int id,required int quantity}) async {
+    emit(UpdateCartLoadingState());
     await DioHelper.postData(
-      url: EndPoints.addFav,
-      data: {'product_id': id},
+      url: EndPoints.updateCart,
+      data: {
+        'cart_item_id': id,
+        'quantity':quantity
+
+      },
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
-      addFavModel = AddFavModel
-          .fromJson(value.data);
+      addCartModel = AddCartModel.fromJson(value.data);
       if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(AddFavSuccessState());
-        getWishList();
+        emit(UpdateCartSuccessState());
+        getCart();
       }
     }).catchError((error) {
       print(error.toString());
@@ -491,32 +490,110 @@ CityModel? cityModel;
         final message = data['errors'];
         print(message);
       }
-      emit(AddFavErrorState());
+      emit(UpdateCartErrorState());
     });
   }
 
-  removeFav({required int id}) async {
-    emit(RemoveFavLoadingState());
-    await DioHelper.postData(
-      url: EndPoints.removeFav,
-      data: {'product_id': id},
+  // books screen
+  getBooks() async {
+    emit(GetBooksLoadingState());
+    await DioHelper.getData(
+      url: EndPoints.getBooks,
       token: await SecureStorage().storage.read(key: 'token'),
     ).then((value) async {
-      addFavModel = AddFavModel.fromJson(value.data);
+      booksModel = BooksModel.fromJson(value.data);
       if (value.data['status'] == 200 || value.data['status'] == 201) {
-        emit(RemoveFavSuccessState());
-        getWishList();
+        emit(GetBooksSuccessState());
       }
     }).catchError((error) {
       print(error.toString());
-      if (error is DioException && error.response?.statusCode == 422) {
+      if (error is DioException && error.response?.statusCode == 404) {
         final data = error.response?.data;
-        final message = data['errors'];
+        final message = data['message'];
         print(message);
       }
-      emit(RemoveFavErrorState());
+      emit(GetBooksErrorState());
     });
   }
+  // place order
+  getCity() async {
+    emit(GetCityLoadingState());
+    await DioHelper.getData(
+      url: EndPoints.city,
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      cityModel = CityModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(GetCitySuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 404) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(GetCityErrorState());
+    });
+  }
+
+  void getCities(value) {
+    index=value;
+    emit(cityState());
+  }
+
+  placeOrder() async {
+    emit(PlaceOrderLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.placeOrder,
+      data: {
+        'governorate_id': index,
+        'phone':phoneController.text,
+        'name':nameController.text,
+        'email':emailController.text,
+        'address':addressController.text
+      },
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      placeOrderModel = PlaceOrderModel.fromJson(value.data);
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(PlaceOrderSuccessState());
+        getOrderHistory();
+        getCart();
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 404) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(PlaceOrderErrorState());
+    });
+  }
+
+  SearchModel? searchModel;
+   searchBooks(text) async {
+    emit(SearchLoadingState());
+    await DioHelper.getData(
+        url: EndPoints.search,
+        query: {
+          'name': '$text'
+        },
+        token: await SecureStorage().storage.read(key: 'token'))
+        .then((value) {
+      searchModel = SearchModel.fromJson(value.data);
+      emit(SearchSuccessState());
+    }).catchError((error) {
+      if (error is DioException && error.response?.statusCode == 401) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(SearchErrorState());
+    });
+  }
+
 
   int currentindex = 0;
 
@@ -532,7 +609,7 @@ CityModel? cityModel;
       color: Colors.white,
     ),
     Icon(
-      Icons.bookmarks_sharp,
+      Icons.book,
       size: 30.sp,
       color: Colors.white,
     ),

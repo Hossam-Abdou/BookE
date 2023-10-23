@@ -1,3 +1,4 @@
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,7 +17,7 @@ class CheckOutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<HomeCubit, HomeState>(
       listener: (context, state) {
-        if(state is AddCartSuccessState)
+        if(state is PlaceOrderSuccessState)
           {
             SnackBar snackBar =  SnackBar(
               content: const Text('Order placed successfully'),
@@ -24,7 +25,7 @@ class CheckOutScreen extends StatelessWidget {
               duration: const Duration(seconds: 1),
             );
             ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            pushReplace(context, Home());
+           Navigator.pop(context,MaterialPageRoute(builder: (context) => Home(),));
           }
       },
       builder: (context, state) {
@@ -38,6 +39,7 @@ class CheckOutScreen extends StatelessWidget {
                   padding: EdgeInsets.only(top: 16.0.h),
                   child: Column(
                     children: [
+
                       SecondCustomField(
                         controller: cubit.nameController,
                         label: 'Name',
@@ -93,7 +95,7 @@ class CheckOutScreen extends StatelessWidget {
                                     value: cubit.cityModel!.data![index].id,
                                     groupValue: cubit.index,
                                     onChanged: (value) =>
-                                        cubit.getFilter(value)),
+                                        cubit.getCities(value)),
                               ),
                             ),
                           ]),
@@ -124,15 +126,21 @@ class CheckOutScreen extends StatelessWidget {
                       SizedBox(
                         height: 20.h,
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          print(cubit.index);
-                          cubit.placeOrder();
-                        },
-                        child: CustomButton(
-                          text: 'Place Order',
+                      ConditionalBuilder(
+                        condition: state is AddCartLoadingState,
+                        fallback:(context)=>GestureDetector(
+                          onTap: () {
+                            print(cubit.index);
+                            cubit.placeOrder();
+                          },
+                          child: CustomButton(
+                            text: 'Place Order',
+                            color: CustomColors.primaryButton,
+                          ),
                         ),
+                        builder: (context) => Center(child: CircularProgressIndicator(color: CustomColors.primaryButton.withOpacity(0.5),)),
                       ),
+
                     ],
                   ),
                 ),

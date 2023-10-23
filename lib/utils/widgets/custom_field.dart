@@ -9,12 +9,16 @@ class CustomField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextEditingController controller;
   final String? initial;
+  final Widget? pIcon;
+  final Widget? sIcon;
 
   CustomField(
       {required this.label,
       required this.controller,
       this.maxLines,
       this.validator,
+        this.pIcon,
+        this.sIcon,
       this.initial});
   @override
   Widget build(BuildContext context) {
@@ -22,15 +26,21 @@ class CustomField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       maxLines: maxLines ?? 1,
+
       validator: validator,
       cursorColor: CustomColors.black,
       decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
+          suffixIcon: sIcon,
+          prefixIcon: pIcon,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
           enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
           //prefixIcon: Icon(prefix),

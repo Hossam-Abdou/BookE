@@ -72,7 +72,7 @@ class OrderProducts {
   String? productName;
   String? productPrice;
   int? productDiscount;
-  double? productPriceAfterDiscount;
+  num? productPriceAfterDiscount;
   int? orderProductQuantity;
   String? productTotal;
 

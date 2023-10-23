@@ -17,6 +17,8 @@ class FavouriteScreen extends StatelessWidget {
         {
           SnackBar snackBar =  SnackBar(
             content: Text('Removed From Favourites Successfully'),
+            duration: Duration(seconds: 1),
+
             backgroundColor: CustomColors.greyText,
           );
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -26,6 +28,8 @@ class FavouriteScreen extends StatelessWidget {
           SnackBar snackBar =  SnackBar(
             content: Text('Added to cart Successfully'),
             backgroundColor: CustomColors.greyText,
+            duration: Duration(seconds: 1),
+
           );
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
         }
@@ -35,7 +39,9 @@ class FavouriteScreen extends StatelessWidget {
         return Scaffold(
           body: Padding(
             padding:  EdgeInsets.all(14.0.w),
-            child: ListView.separated(
+            child: cubit.wishListModel?.data?.dataInfo?.length== 0 ?
+            Center(child: Text('No Favourites Yet',style: TextStyle(color: CustomColors.primaryButton,fontSize: 20.sp),)):
+            ListView.separated(
                 shrinkWrap: true,
               separatorBuilder: (context, index) => SizedBox(height: 10.h,),
               itemCount: cubit.wishListModel?.data?.dataInfo?.length??0,
@@ -44,7 +50,7 @@ class FavouriteScreen extends StatelessWidget {
                       padding: EdgeInsets.all(6.w),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Color(0xff2f0569).withOpacity(0.6),width: 3)
+                          border: Border.all(color: CustomColors.primaryButton.withOpacity(0.6),width: 3)
                       ),
                       child: Row(
                         children: [
@@ -81,7 +87,7 @@ class FavouriteScreen extends StatelessWidget {
                                 {
                                   cubit.addToCart(id: cubit.wishListModel?.data?.dataInfo?[index].id ?? 0);
                                 },
-                                  icon: Icon(Icons.add_shopping_cart_rounded,color: Color(0xff2f0569),),),
+                                  icon: Icon(Icons.add_shopping_cart_rounded,color: CustomColors.primaryButton,),),
 
                               ],
                             ),

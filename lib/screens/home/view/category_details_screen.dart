@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:untitled4/screens/home/view_model/home_cubit.dart';
-import 'package:untitled4/utils/colors/custom_colors.dart';
-import 'package:untitled4/utils/widgets/custom_button.dart';
 
-class DetailsScreen extends StatelessWidget {
+import '../../../utils/colors/custom_colors.dart';
+import '../../../utils/widgets/custom_button.dart';
+import '../model/books_model.dart';
+import '../view_model/home_cubit.dart';
+
+class CategoryDetailsScreen extends StatelessWidget {
   dynamic id;
 
-  DetailsScreen({this.id});
+  CategoryDetailsScreen({this.id});
 
   @override
   Widget build(BuildContext context) {
@@ -24,17 +26,9 @@ class DetailsScreen extends StatelessWidget {
           );
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
         }
-        if (state is RemoveFavSuccessState) {
-          SnackBar snackBar = SnackBar(
-            content: Text('Removed from Favourites Successfully'),
-            backgroundColor: CustomColors.greyText,
-            duration: Duration(seconds: 1),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        }
         if (state is AddFavSuccessState) {
           SnackBar snackBar = SnackBar(
-            content: Text('Added to Favourites'),
+            content: Text('Added to Favourites Successfully'),
             backgroundColor: CustomColors.greyText,
             duration: Duration(seconds: 1),
           );
@@ -54,7 +48,7 @@ class DetailsScreen extends StatelessWidget {
                     Stack(
                       children: [
                         Image.network(
-                          '${id.image}',
+                          '${id?.image}',
                           height: 280.h,
                           fit: BoxFit.fill,
                           width: double.infinity,
@@ -80,7 +74,8 @@ class DetailsScreen extends StatelessWidget {
                                 backgroundColor: Colors.grey[400],
                                 child: IconButton(
                                   onPressed: () {
-                                    if (cubit.wishListModel!.data!.dataInfo!.any((item) => item.id == id.id ) ) {
+                                    if (cubit.wishListModel!.data!.dataInfo!
+                                        .any((item) => item.id == id.id)) {
                                       cubit.removeFav(id: id.id ?? 0);
                                     } else {
                                       cubit.addToFav(
@@ -91,7 +86,7 @@ class DetailsScreen extends StatelessWidget {
                                   icon: Icon(
                                     Icons.favorite,
                                     color: cubit.wishListModel!.data!.dataInfo!
-                                            .any((item) => item.id == id.id)
+                                            .any((item) => item.id == id!.id)
                                         ? Colors.red
                                         : Colors.white,
                                   ),
@@ -108,7 +103,7 @@ class DetailsScreen extends StatelessWidget {
                     SizedBox(
                         width: 210.w,
                         child: Text(
-                          '${id.name}',
+                          '${id?.name}',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.roboto(
@@ -118,21 +113,21 @@ class DetailsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${id.category}',
+                          '${cubit.categoryDetailsModel?.data?.name}',
                           style: GoogleFonts.roboto(
                               color: Colors.grey[600], fontSize: 18.sp),
                         ),
                         Column(
                           children: [
                             Text(
-                              '${id.price}',
+                              '${id?.price}',
                               style: GoogleFonts.roboto(
                                   decoration: TextDecoration.lineThrough,
                                   color: Colors.red[300],
                                   fontSize: 13),
                             ),
                             Text(
-                              '${id.priceAfterDiscount}',
+                              '${id?.priceAfterDiscount}',
                               style: GoogleFonts.roboto(
                                   color: Colors.black,
                                   fontWeight: FontWeight.bold),
@@ -162,7 +157,7 @@ class DetailsScreen extends StatelessWidget {
                         condition: state is AddCartLoadingState,
                         fallback: (context) => InkWell(
                           onTap: () {
-                            cubit.addToCart(id: id.id);
+                            cubit.addToCart(id: id!.id!);
                           },
                           child: CustomButton(
                             text: 'Add to Cart',

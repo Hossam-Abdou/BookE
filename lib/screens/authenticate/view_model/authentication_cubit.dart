@@ -19,11 +19,19 @@ class AuthCubit extends Cubit<AuthState> {
   TextEditingController phoneController = TextEditingController();
   TextEditingController pinController = TextEditingController();
 
+  TextEditingController verifyPasswordController = TextEditingController();
+  TextEditingController verifyyPasswordController = TextEditingController();
+  TextEditingController cverifyPasswordController = TextEditingController();
+  TextEditingController newPasswordController = TextEditingController();
+  TextEditingController confirmNewPasswordController = TextEditingController();
   var formKey = GlobalKey<FormState>();
 
   var regKey = GlobalKey<FormState>();
 
   var updatKey = GlobalKey<FormState>();
+  var resetKey = GlobalKey<FormState>();
+  var updatePassKey = GlobalKey<FormState>();
+
 
   AuthenticateModel? authenticateModel;
   VerifyModel? verifyModel;
@@ -56,16 +64,7 @@ String? email;
       emit(UserRegisterErrorState());
     });
   }
-  // void showToast(String message) {
-  //   Fluttertoast.showToast(
-  //     msg: message,
-  //     toastLength: Toast.LENGTH_SHORT,
-  //     gravity: ToastGravity.BOTTOM,
-  //     backgroundColor: Colors.green[700],
-  //     textColor: Colors.white,
-  //   );
-  //   emit(to());
-  // }
+
   Login() async {
     emit(UserLoginLoadingState());
     await DioHelper.postData(url: EndPoints.login, data: {
@@ -90,7 +89,6 @@ String? email;
       emit(UserLoginErrorState());
     });
   }
-  ///toDO logout
   LogOut() async {
     emit(UserLogoutLoadingState());
     await DioHelper.postData(
@@ -151,7 +149,7 @@ String? email;
       }
     }).catchError((error) {
       print(error.toString());
-      if (error is DioException && error.response?.statusCode == 404) {
+      if (error is DioException && error.response?.statusCode == 401) {
         final data = error.response?.data;
         final message = data['message'];
         print(message);
@@ -179,6 +177,53 @@ String? email;
         print(message);
       }
       emit(SendForgetPassErrorState());
+    });
+  }
+
+  checkForgetPass() async {
+    emit(CheckForgetPassLoadingState());
+    await DioHelper.postData(url: EndPoints.checkForgetPassword,
+        data: {
+      'verify_code':verifyPasswordController.text,
+        },
+        token: await SecureStorage().storage.read(key: 'token'),
+     ).then((value) async {
+      if (value.data['status'] == 200 ||value.data['status'] == 201 ) {
+        emit(CheckForgetPassSuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 422) {
+        final data = error.response?.data;
+        final message = data['message'];
+        print(message);
+      }
+      emit(CheckForgetPassErrorState());
+    });
+  }
+
+  resetPassword() async {
+    emit(ResetPassLoadingState());
+    await DioHelper.postData(
+      url: EndPoints.resetPassword,
+      data: {
+        'verify_code': verifyyPasswordController.text,
+        'new_password': newPasswordController.text,
+        'new_password_confirmation': confirmNewPasswordController.text,
+      },
+      token: await SecureStorage().storage.read(key: 'token'),
+    ).then((value) async {
+      if (value.data['status'] == 200 || value.data['status'] == 201) {
+        emit(ResetPassSuccessState());
+      }
+    }).catchError((error) {
+      print(error.toString());
+      if (error is DioException && error.response?.statusCode == 422) {
+        final data = error.response?.data;
+        final message = data['errors'];
+        print(message);
+      }
+      emit(ResetPassErrorState());
     });
   }
 

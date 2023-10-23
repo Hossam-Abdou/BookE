@@ -2,8 +2,8 @@
 
 **Usage:**
 
--Log in or Register to access browse different books.
--search for specific book.
+- Log in or Register to access browse different books.
+- search for specific book.
 -Add/remove from Wishlist.
 -Add/remove from Cart.
 -Checkout.
